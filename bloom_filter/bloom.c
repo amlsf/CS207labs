@@ -20,32 +20,86 @@ int main(){
 //    for(int i = 0; i < size; i++){
 //        printf("%llu\n", (uint64_t)hash2(&bloom, test_array[i]));
 //    }
+    /**********************
+     * Test Bit Operations
+     * ********************/
+//    bloom_filter_t bloom;
+//    bloom_init(&bloom, 66);
+//
+//    set_bit(&bloom, 64);
+//
+//    printf("%llu\n", get_bit(&bloom, 64));
+//
+//    bloom_destroy(&bloom);
 
-    /*************
-     * Smoke Test
-     * ***********/
-    // create bloom filter with 1000 elements (bits)
+    /**********************
+     * Test API Check & Add
+     * ********************/
     bloom_filter_t bloom;
-    bloom_init(bloom, 1000);
+    bloom_init(&bloom, 100);
 
-    // add the first 70 positive integers to filter
-    for (int i=1; i <= 70; i++){
-        bloom_add(bloom, i);
-    }
+    bloom_add(&bloom, 5);
 
-    // count the actual number of of  bits set in table
-    // Write a quick function that counts the actual number of bits set in your table. (This doesn't need to be clever, a
-    // brute force loop calling get_bit is fine.)
+    printf("%d\n", bloom_check(&bloom, 6));
+
     uint64_t counter = 0;
-    for (int i=0; i < bloom<-size; i++){
-        set = get_bit(bloom, i);
+    for (index_t j=0; j < 100; j++){
+        index_t set = get_bit(&bloom, j);
         if (set != 0){
             counter++;
         }
     }
 
-    printf('Total bits set: %lu', counter);
-    bloom_destroy(bloom);
+    // TODO this keeps changing depending on the run. Do need to set the whole malloc to 0?
+    printf("Total bits set: %llu\n", counter);
+
+    bloom_destroy(&bloom);
+
+    /*************
+     * Smoke Test
+     * ***********/
+//    // TODO understand better about why de-referencing bloom when it's already a pointer?
+//    // create bloom filter with 1000 elements (bits)
+//    bloom_filter_t bloom;
+//    bloom_init(&bloom, 1000);
+//
+//    // add the first 70 positive integers to filter
+//    for (int i=1; i <= 70; i++){
+//        // TODO try printing out the hashes for each?
+//        bloom_add(&bloom, i);
+//    }
+//
+//    // count the actual number of of  bits set in table
+//    // Write a quick function that counts the actual number of bits set in your table. (This doesn't need to be clever, a
+//    // brute force loop calling get_bit is fine.)
+//    uint64_t counter = 0;
+//    for (index_t j=0; j < 1000; j++){
+//        index_t set = get_bit(&bloom, j);
+//        if (set != 0){
+//            counter++;
+//        }
+//    }
+//
+//    // TODO why is this showing up as 3? should see close to see 210 bits set
+//    printf("Total bits set: %llu\n", counter);
+//    // TODO why getting an error here? Can't use bloom->count (error: member reference type 'bloom_filter_t' is not a pointer; maybe you meant to use '.'?)
+//    printf("Counter: %llu\n", bloom.count);
+//    bloom_destroy(&bloom);
+
+    /**************************
+     * Understanding Trade-offs
+     * ************************/
+
+    // First, write a function that generates an array of 100 random number between 0 and 1000000. You might find the rand() function helpful.
+
+    // The input should be two arrays of 100 numbers, just like the ones generated from the previous function.
+    // First, have the function create a new Bloom filter with 1000 elements and add all the elements of the first input array to it.
+    // Second, create a loop that counts the number of bits, just like your smoke test.
+    // Finally, create a loop that checks whether the numbers in the second array are in the table.
+    // Recall that we never added them, so if our hash table was perfect, there would be a very small number of collisions
+    // (equal to the number of expected collisions between two sets of 100 random numbers from 0-1000000).
+    // In reality, there will be many more, because of the way Bloom filters work.
+    // Count up and print out how many of the numbers in the second array returned true.
 
     return 0;
 }
@@ -129,9 +183,10 @@ void bloom_destroy(bloom_filter_t *B){
 
 int bloom_check(bloom_filter_t *B, key_t k){
     // create N_HASHES of k
-    for (int i; i < N_HASHES; i++){
-        index_t hash = (hash1(k) + i*hash2(k)) % B->size;
-        outcome = get_bit(B, hash);
+    for (int i=0; i < N_HASHES; i++){
+        // TODO  have to mod again since adding hash functions?
+        index_t hash = (hash1(B, k) + i*hash2(B, k)) % B->size;
+        index_t outcome = get_bit(B, hash);
         // check each hash location with get_bit. If any one of them is 0, then return 0 (definitely not in bloom filter).
         if (outcome == 0){
             return 0;
@@ -143,8 +198,9 @@ int bloom_check(bloom_filter_t *B, key_t k){
 
 void bloom_add(bloom_filter_t *B, key_t k){
     // create N_HASHES of k
-    for (int i; i < N_HASHES; i++){
-        index_t hash = (hash1(k) + i*hash2(k)) % B->size;
+    for (int i=0; i < N_HASHES; i++){
+        // TODO  have to mod again since adding hash functions?
+        index_t hash = (hash1(B, k) + i*hash2(B, k)) % B->size;
         set_bit(B, hash);
     }
     // Make sure to add up count
