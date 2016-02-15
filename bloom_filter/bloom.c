@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "bloom.h"
+// function declaration
+int* create_random_numbers(int count);
 
 
 int main(){
@@ -26,6 +28,7 @@ int main(){
 //    bloom_filter_t bloom;
 //    bloom_init(&bloom, 66);
 //
+//    // set_bit is expecting a pointer, so make the struct a pointer
 //    set_bit(&bloom, 64);
 //
 //    printf("%llu\n", get_bit(&bloom, 64));
@@ -35,37 +38,34 @@ int main(){
     /**********************
      * Test API Check & Add
      * ********************/
-    bloom_filter_t bloom;
-    bloom_init(&bloom, 100);
-
-    bloom_add(&bloom, 5);
-
-    printf("%d\n", bloom_check(&bloom, 6));
-
-    uint64_t counter = 0;
-    for (index_t j=0; j < 100; j++){
-        index_t set = get_bit(&bloom, j);
-        if (set != 0){
-            counter++;
-        }
-    }
-
-    // TODO this keeps changing depending on the run. Do need to set the whole malloc to 0?
-    printf("Total bits set: %llu\n", counter);
-
-    bloom_destroy(&bloom);
+//    bloom_filter_t bloom;
+//    bloom_init(&bloom, 100);
+//
+//    bloom_add(&bloom, 5);
+//
+//    printf("%d\n", bloom_check(&bloom, 6));
+//
+//    uint64_t counter = 0;
+//    for (index_t j=0; j < 100; j++){
+//        index_t set = get_bit(&bloom, j);
+//        if (set != 0){
+//            counter++;
+//        }
+//    }
+//
+//    printf("Total bits set: %llu\n", counter);
+//
+//    bloom_destroy(&bloom);
 
     /*************
      * Smoke Test
      * ***********/
-//    // TODO understand better about why de-referencing bloom when it's already a pointer?
 //    // create bloom filter with 1000 elements (bits)
 //    bloom_filter_t bloom;
 //    bloom_init(&bloom, 1000);
 //
 //    // add the first 70 positive integers to filter
 //    for (int i=1; i <= 70; i++){
-//        // TODO try printing out the hashes for each?
 //        bloom_add(&bloom, i);
 //    }
 //
@@ -80,9 +80,8 @@ int main(){
 //        }
 //    }
 //
-//    // TODO why is this showing up as 3? should see close to see 210 bits set
 //    printf("Total bits set: %llu\n", counter);
-//    // TODO why getting an error here? Can't use bloom->count (error: member reference type 'bloom_filter_t' is not a pointer; maybe you meant to use '.'?)
+//    // here bloom is no longer a pointer, just a struct, so use '.' instead of '->'
 //    printf("Counter: %llu\n", bloom.count);
 //    bloom_destroy(&bloom);
 
@@ -91,21 +90,64 @@ int main(){
      * ************************/
 
     // First, write a function that generates an array of 100 random number between 0 and 1000000. You might find the rand() function helpful.
-
     // The input should be two arrays of 100 numbers, just like the ones generated from the previous function.
-    // First, have the function create a new Bloom filter with 1000 elements and add all the elements of the first input array to it.
-    // Second, create a loop that counts the number of bits, just like your smoke test.
-    // Finally, create a loop that checks whether the numbers in the second array are in the table.
-    // Recall that we never added them, so if our hash table was perfect, there would be a very small number of collisions
-    // (equal to the number of expected collisions between two sets of 100 random numbers from 0-1000000).
-    // In reality, there will be many more, because of the way Bloom filters work.
-    // Count up and print out how many of the numbers in the second array returned true.
+    int* array1 = create_random_numbers(100);
+    int* array2 = create_random_numbers(100);
 
+    // First, have the function create a new Bloom filter with 1000 elements and add all the elements of the first input array to it.
+    bloom_filter_t bloom;
+    bloom_init(&bloom, 1000);
+
+    for (int i = 0; i < 100; i++){
+        bloom_add(&bloom, array1[i]);
+    }
+
+    // Second, create a loop that counts the number of bits, just like your smoke test.
+    uint64_t counter = 0;
+    for (index_t j=0; j < 1000; j++){
+        index_t set = get_bit(&bloom, j);
+        if (set != 0){
+            counter++;
+        }
+    }
+    printf("Total bits set: %llu\n", counter);
+
+    // Finally, create a loop that checks whether the numbers in the second array are in the table.
+    // Recall that we never added them, so if our hash table was perfecst, there would be a very small number of collisions
+    uint64_t in_array_count = 0;
+    for (index_t j=0; j < 100; j++){
+        index_t check = bloom_check(&bloom, array2[j]);
+        if (check != 0){
+            in_array_count++;
+        }
+    }
+    // Count up and print out how many of the numbers in the second array returned true.
+    printf("Total false positive count: %llu\n", in_array_count);
+
+    free(array1);
+    free(array2);
+    bloom_destroy(&bloom);
     return 0;
 }
-// As the number of hash functions goes up, the occupancy rate increases velocity and and the false positive rate decreases.
-// (However this is assuming the table size is large enough, otherwise the false positive rate would actually increase.)
+//As the number of hash functions goes up, the occupancy rate increases and and the false positive rate decreases.
+// However this is assuming the table size is large enough -- after a certain point when the number of hashes becomes too large, the false positive rate actually increases.
+/* N_HASHES    bits set     false positive count
+ * 1            93          10
+ * 2            173         3
+ * 3            256         2
+ * 4            318         1
+ * 5            378         4
+ */
 
+
+int* create_random_numbers(int count){
+    int *array = (int *) malloc(count * sizeof(int));
+    for (int i=0; i < count; i++){
+        array[i] = rand();
+    }
+
+    return array;
+}
 
 /*******************
  Bit Operations
@@ -172,7 +214,9 @@ void bloom_init(bloom_filter_t *B, index_t size_in_bits){
     // add 1 extra byte for remainder after integer division
     index_t size_of_array = (size_in_bits / sizeof(index_t)) + 1;
 
-    B->table = (index_t *) malloc(sizeof(index_t) * size_of_array);
+//    B->table = (index_t *) malloc(sizeof(index_t) * size_of_array);
+    // free empty space set to 0
+    B->table = (index_t *) calloc(size_of_array, sizeof(index_t));
 }
 
 
