@@ -104,5 +104,3 @@ int main(){
     printf("Index for 3 %d\n", get_index(listptr, 3));
     free_all(listptr);
 }
-
-// Test
