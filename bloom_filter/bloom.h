@@ -6,9 +6,10 @@ typedef uint64_t index_t; // output of hash fxn
 typedef uint64_t key_t; // input to hash fxn
 typedef struct {
   index_t size; // in bits; the size of the whole table
-  index_t count; // in bits; the count of elements in the table? (x N_HASHES??)
-  index_t *table; // TODO what is this? Pointer to the hash table?
+  index_t count; // in bits; the count of elements in the table? (x N_HASHES?)
+  index_t *table; // Pointer to the array
 } bloom_filter_t;
+
 // # of hash functions we will have
 #define N_HASHES 3
 
