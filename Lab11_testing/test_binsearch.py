@@ -1,29 +1,77 @@
 from pytest import raises
-from amath import myaverage, mymedian
+from binsearch import binary_search
+import numpy as np
 
-"""
-1. We should test with wierd data, ie a wierd array: does it have NANs, is it numeric? Does it have 0 elelemts? 1 element? 2?...ie test the boundaries
-2. Then think of how the needle relates to the above. Try needles less than or greter than the range in the sorted array,
-besides needles inbetween (in both cases the needle not being in the array). Try needles at the extremes of the array.
-3. test the integration of 1 and 2 to make sure something has not gone wrong there.
 
-Note: you can always compare your answers with linear search implemented in python.
-"""
+input = list(range(10))
 
-def test_mymath_mean():
-    assert myaverage([9,3]) == 6
 
-def test_char():
+def test_1():
+    assert binary_search(input, 5) == 5
+
+
+def test_2():
+    assert binary_search(input, 4.5) == -1
+
+
+def test_3():
+    assert binary_search([5], 5) == 0
+
+
+def test_4():
+    assert binary_search([5], 4) == -1
+
+
+def test_5():
+    binary_search([], 4) == -1
+
+
+def test_6():
+    binary_search(input, 11) == -1
+
+
+def test_not_alist():
     with raises(TypeError):
-        myaverage(['a',3])
+        binary_search('a', 1)
 
-def test_mymath():
-    assert mymedian([9,3, 6]) == 6
 
-def test_zero_median():
-    with raises(ValueError):
-        mymedian([])
-
-def test_char_median():
+def test_missing_args():
     with raises(TypeError):
-        mymedian(['a', 3])
+        binary_search([1, 2])
+
+
+def test_not_numeric():
+    assert binary_search(['a', 'b'], 'b') == 1
+
+
+def test_other():
+    assert binary_search(['hello', 'there', 'you', 'abc'], 'abc') == -1
+
+
+# TODO this is a problem
+def test_nan():
+    assert binary_search([np.nan, 0, 2, 3, 4], np.nan) == 2
+
+
+def test_needle_1():
+    assert binary_search(input, 5, 2, 2) == -1
+
+
+def test_needle_2():
+    assert binary_search(input, 2, 2, 2) == 2
+
+
+def test_needle_3():
+    assert binary_search(input, 2, 1,3) == 2
+
+
+def test_needle_4():
+    assert binary_search(input, 2, 3, 1) == -1
+
+
+def test_needle_5():
+    assert binary_search(input, 9) == 9
+
+
+def test_both():
+    assert binary_search([5], 7) == -1

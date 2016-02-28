@@ -43,24 +43,12 @@ def binary_search(da_array: list, needle, left:int=0, right:int=-1) -> int:
     -1
     >>> binary_search(input, 10)
     -1
-    >>> binary_search([5], 5)
-    0
-    >>> binary_search([5], 4)
-    -1
     >>> import numpy as np
     >>> binary_search([1,2,np.inf], 2)
     1
     >>> binary_search([1,2,np.inf], np.inf)
     2
     >>> binary_search(input, 5, 1,3)
-    -1
-    >>> binary_search(input, 2, 1,3)
-    2
-    >>> binary_search(input, 2, 3, 1)
-    -1
-    >>> binary_search(input, 2, 2, 2)
-    2
-    >>> binary_search(input, 5, 2, 2)
     -1
     """
     if left==0:
